@@ -11,6 +11,9 @@
 #include<fstream>
 #include<sstream>
 using namespace std;
+//Missing features: Loading instructions and Data from file.
+//Test code for bonus.
+//Fix Branching and jumping instructions.
 unordered_map<string, string> registers;
 map<string, string> memory;
 map<int, string>PC_Mem_Ptr;
@@ -1046,272 +1049,272 @@ int main()
 							}
 							SRAI(rd, rs1, imm);
 						}
-						else if (instructions == "BNE")
-						{
-							string rs1, rs2, imm;
-							getline(s, rs1, ',');
-							getline(s, rs2, ',');
-							getline(s, imm);
-							//PC_PTR int, memory address
-							//mem_inst memory address, instruction
-							unordered_map<string, string>::iterator it1;
-							it1 = registers.find(rs1);
-							int t1 = stoi(it1->second);
-							it1 = registers.find(rs2);
-							int t3 = bit_12OverflowSim(stoi(imm));
-							int t2 = stoi(it1->second);
-							if (t1 != t2)
-								//address = it->first + t3;
-							//Inst_Print();
-							// Logic: t3 % 4 and check if = 0 --> correct then PC+ (t3)/4 Offeset from current instruction
-								//PRINT THE NEXT INSTRUCTION
-						}
-						else if (instructions == "BEQ")
-						{
-							string rs1, rs2, imm;
-							getline(s, rs1, ',');
-							getline(s, rs2, ',');
-							getline(s, imm);
-							auto it1 = registers.find(rs1);
-							int temp1 = stoi(it1->second[0]);
-							it1 = registers.find(rs2);
-							int temp2 = stoi(it1->second[0]);
-							if (temp1 == temp2)
-								address = it->first + stoi(imm);
-							printMap();
-						}
-						else if (instructions == "BLT")
-						{
-							string rs1, rs2, imm;
-							getline(s, rs1, ',');
-							getline(s, rs2, ',');
-							getline(s, imm);
-							auto it1 = registers.find(rs1);
-							int temp1 = stoi(it1->second[0]);
-							it1 = registers.find(rs2);
-							int temp2 = stoi(it1->second[0]);
-							if (temp1 < temp2)
-								address = it->first + stoi(imm);
+						//else if (instructions == "BNE")
+						//{
+						//	string rs1, rs2, imm;
+						//	getline(s, rs1, ',');
+						//	getline(s, rs2, ',');
+						//	getline(s, imm);
+						//	//PC_PTR int, memory address
+						//	//mem_inst memory address, instruction
+						//	unordered_map<string, string>::iterator it1;
+						//	it1 = registers.find(rs1);
+						//	int t1 = stoi(it1->second);
+						//	it1 = registers.find(rs2);
+						//	int t3 = bit_12OverflowSim(stoi(imm));
+						//	int t2 = stoi(it1->second);
+						//	if (t1 != t2)
+						//		//address = it->first + t3;
+						//	//Inst_Print();
+						//	// Logic: t3 % 4 and check if = 0 --> correct then PC+ (t3)/4 Offeset from current instruction
+						//		//PRINT THE NEXT INSTRUCTION
+						//}
+						//else if (instructions == "BEQ")
+						//{
+						//	string rs1, rs2, imm;
+						//	getline(s, rs1, ',');
+						//	getline(s, rs2, ',');
+						//	getline(s, imm);
+						//	auto it1 = registers.find(rs1);
+						//	int temp1 = stoi(it1->second[0]);
+						//	it1 = registers.find(rs2);
+						//	int temp2 = stoi(it1->second[0]);
+						//	if (temp1 == temp2)
+						//		address = it->first + stoi(imm);
+						//	printMap();
+						//}
+						//else if (instructions == "BLT")
+						//{
+						//	string rs1, rs2, imm;
+						//	getline(s, rs1, ',');
+						//	getline(s, rs2, ',');
+						//	getline(s, imm);
+						//	auto it1 = registers.find(rs1);
+						//	int temp1 = stoi(it1->second[0]);
+						//	it1 = registers.find(rs2);
+						//	int temp2 = stoi(it1->second[0]);
+						//	if (temp1 < temp2)
+						//		address = it->first + stoi(imm);
 
-							printMap();
+						//	printMap();
 
-						}
-						else if (instructions == "BLTU")
-						{
-							string rs1, rs2, imm;
-							getline(s, rs1, ',');
-							getline(s, rs2, ',');
-							getline(s, imm);
-							auto it1 = registers.find(rs1);
-							unsigned int temp1 = stoi(it1->second[0]);
-							it1 = registers.find(rs2);
-							unsigned int temp2 = stoi(it1->second[0]);
-							if (temp1 < temp2)
-								address = it->first + stoi(imm);
-							printMap();
+						//}
+						//else if (instructions == "BLTU")
+						//{
+						//	string rs1, rs2, imm;
+						//	getline(s, rs1, ',');
+						//	getline(s, rs2, ',');
+						//	getline(s, imm);
+						//	auto it1 = registers.find(rs1);
+						//	unsigned int temp1 = stoi(it1->second[0]);
+						//	it1 = registers.find(rs2);
+						//	unsigned int temp2 = stoi(it1->second[0]);
+						//	if (temp1 < temp2)
+						//		address = it->first + stoi(imm);
+						//	printMap();
 
-						}
-						else if (instructions == "BGE")
-						{
-							string rs1, rs2, imm;
-							getline(s, rs1, ',');
-							getline(s, rs2, ',');
-							getline(s, imm);
-							auto it1 = registers.find(rs1);
-							int temp1 = stoi(it1->second[0]);
-							it1 = registers.find(rs2);
-							int temp2 = stoi(it1->second[0]);
-							if (temp1 > temp2)
-								address = it->first + stoi(imm);
-							printMap();
+						//}
+						//else if (instructions == "BGE")
+						//{
+						//	string rs1, rs2, imm;
+						//	getline(s, rs1, ',');
+						//	getline(s, rs2, ',');
+						//	getline(s, imm);
+						//	auto it1 = registers.find(rs1);
+						//	int temp1 = stoi(it1->second[0]);
+						//	it1 = registers.find(rs2);
+						//	int temp2 = stoi(it1->second[0]);
+						//	if (temp1 > temp2)
+						//		address = it->first + stoi(imm);
+						//	printMap();
 
-						}
-						else if (instructions == "BGEU")
-						{
-							string rs1, rs2, imm;
-							getline(s, rs1, ',');
-							getline(s, rs2, ',');
-							getline(s, imm);
-							auto it1 = registers.find(rs1);
-							unsigned int temp1 = stoi(it1->second[0]);
-							it1 = registers.find(rs2);
-							unsigned int temp2 = stoi(it1->second[0]);
-							if (temp1 > temp2)
-								address = it->first + stoi(imm);
-							printMap();
+						//}
+						//else if (instructions == "BGEU")
+						//{
+						//	string rs1, rs2, imm;
+						//	getline(s, rs1, ',');
+						//	getline(s, rs2, ',');
+						//	getline(s, imm);
+						//	auto it1 = registers.find(rs1);
+						//	unsigned int temp1 = stoi(it1->second[0]);
+						//	it1 = registers.find(rs2);
+						//	unsigned int temp2 = stoi(it1->second[0]);
+						//	if (temp1 > temp2)
+						//		address = it->first + stoi(imm);
+						//	printMap();
 
-						}
-						else if (instructions == "JAL")
-						{
-							string ra, imm;
-							getline(s, ra, ',');
-							getline(s, imm);
+						//}
+						//else if (instructions == "JAL")
+						//{
+						//	string ra, imm;
+						//	getline(s, ra, ',');
+						//	getline(s, imm);
 
-							if (ra == "x0")
-							{
-								cout << "Invalid Input !" << endl;
-								cout << line << endl;
-								cout << "Can't modify register 0 " << endl;
-								return 0;
-							}
-							auto it1 = registers.find(ra);
-							it1->second[0] = to_string(address - 4);
-							address = it->first + stoi(imm);
+						//	if (ra == "x0")
+						//	{
+						//		cout << "Invalid Input !" << endl;
+						//		cout << line << endl;
+						//		cout << "Can't modify register 0 " << endl;
+						//		return 0;
+						//	}
+						//	auto it1 = registers.find(ra);
+						//	it1->second[0] = to_string(address - 4);
+						//	address = it->first + stoi(imm);
 
-							printMap();
+						//	printMap();
 
-						}
-						else if (instructions == "JALR")
-						{
-							string zero, ra, offset;
-							getline(s, zero, ',');
-							getline(s, offset, '(');
-							getline(s, ra, ')');
+						//}
+						//else if (instructions == "JALR")
+						//{
+						//	string zero, ra, offset;
+						//	getline(s, zero, ',');
+						//	getline(s, offset, '(');
+						//	getline(s, ra, ')');
 
-							auto it1 = registers.find(ra);
-							address = stoi(it1->second[0]) + stoi(offset) + 4;
+						//	auto it1 = registers.find(ra);
+						//	address = stoi(it1->second[0]) + stoi(offset) + 4;
 
 
-						}
-						else if (instructions == "SW")
-						{
-							string source, destination, offset;
-							getline(s, source, ',');
-							getline(s, offset, '(');
-							getline(s, destination, ')');
-							Sw(source, destination, offset);
+						//}
+						//else if (instructions == "SW")
+						//{
+						//	string source, destination, offset;
+						//	getline(s, source, ',');
+						//	getline(s, offset, '(');
+						//	getline(s, destination, ')');
+						//	Sw(source, destination, offset);
 
-						}
-						else if (instructions == "SH")
-						{
-							string source, destination, offset;
-							getline(s, destination, ',');
-							getline(s, offset, '(');
-							getline(s, source, ')');
-							SH(source, destination, offset);
+						//}
+						//else if (instructions == "SH")
+						//{
+						//	string source, destination, offset;
+						//	getline(s, destination, ',');
+						//	getline(s, offset, '(');
+						//	getline(s, source, ')');
+						//	SH(source, destination, offset);
 
-						}
-						else if (instructions == "SB")
-						{
-							string source, destination, offset;
-							getline(s, destination, ',');
-							getline(s, offset, '(');
-							getline(s, source, ')');
-							SB(source, destination, offset);
+						//}
+						//else if (instructions == "SB")
+						//{
+						//	string source, destination, offset;
+						//	getline(s, destination, ',');
+						//	getline(s, offset, '(');
+						//	getline(s, source, ')');
+						//	SB(source, destination, offset);
 
-						}
-						else if (instructions == "LH")
-						{
-							string source, destination, offset;
-							getline(s, destination, ',');
-							getline(s, offset, '(');
-							getline(s, source, ')');
-							if (destination == "x0")
-							{
-								cout << "Invalid Input !" << endl;
-								cout << line << endl;
-								cout << "Can't modify register 0 " << endl;
-								return 0;
-							}
-							LH(source, destination, offset);
+						//}
+						//else if (instructions == "LH")
+						//{
+						//	string source, destination, offset;
+						//	getline(s, destination, ',');
+						//	getline(s, offset, '(');
+						//	getline(s, source, ')');
+						//	if (destination == "x0")
+						//	{
+						//		cout << "Invalid Input !" << endl;
+						//		cout << line << endl;
+						//		cout << "Can't modify register 0 " << endl;
+						//		return 0;
+						//	}
+						//	LH(source, destination, offset);
 
-						}
-						else if (instructions == "LB")
-						{
-							string source, destination, offset;
-							getline(s, destination, ',');
-							getline(s, offset, '(');
-							getline(s, source, ')');
-							if (destination == "x0")
-							{
-								cout << "Invalid Input !" << endl;
-								cout << line << endl;
-								cout << "Can't modify register 0 " << endl;
-								return 0;
-							}
-							LB(source, destination, offset);
+						//}
+						//else if (instructions == "LB")
+						//{
+						//	string source, destination, offset;
+						//	getline(s, destination, ',');
+						//	getline(s, offset, '(');
+						//	getline(s, source, ')');
+						//	if (destination == "x0")
+						//	{
+						//		cout << "Invalid Input !" << endl;
+						//		cout << line << endl;
+						//		cout << "Can't modify register 0 " << endl;
+						//		return 0;
+						//	}
+						//	LB(source, destination, offset);
 
-						}
-						else if (instructions == "LBU")
-						{
-							string source, destination, offset;
-							getline(s, destination, ',');
-							getline(s, offset, '(');
-							getline(s, source, ')');
-							if (destination == "x0")
-							{
-								cout << "Invalid Input !" << endl;
-								cout << line << endl;
-								cout << "Can't modify register 0 " << endl;
-								return 0;
-							}
-							LBU(source, destination, offset);
+						//}
+						//else if (instructions == "LBU")
+						//{
+						//	string source, destination, offset;
+						//	getline(s, destination, ',');
+						//	getline(s, offset, '(');
+						//	getline(s, source, ')');
+						//	if (destination == "x0")
+						//	{
+						//		cout << "Invalid Input !" << endl;
+						//		cout << line << endl;
+						//		cout << "Can't modify register 0 " << endl;
+						//		return 0;
+						//	}
+						//	LBU(source, destination, offset);
 
-						}
-						else if (instructions == "LHU")
-						{
-							string source, destination, offset;
-							getline(s, destination, ',');
-							getline(s, offset, '(');
-							getline(s, source, ')');
-							if (destination == "x0")
-							{
-								cout << "Invalid Input !" << endl;
-								cout << line << endl;
-								cout << "Can't modify register 0 " << endl;
-								return 0;
-							}
-							LHU(source, destination, offset);
+						//}
+						//else if (instructions == "LHU")
+						//{
+						//	string source, destination, offset;
+						//	getline(s, destination, ',');
+						//	getline(s, offset, '(');
+						//	getline(s, source, ')');
+						//	if (destination == "x0")
+						//	{
+						//		cout << "Invalid Input !" << endl;
+						//		cout << line << endl;
+						//		cout << "Can't modify register 0 " << endl;
+						//		return 0;
+						//	}
+						//	LHU(source, destination, offset);
 
-						}
-						else if (instructions == "LW")
-						{
-							string source, destination, offset;
-							getline(s, destination, ',');
-							getline(s, offset, '(');
-							getline(s, source, ')');
-							if (destination == "x0")
-							{
-								cout << "Invalid Input !" << endl;
-								cout << line << endl;
-								cout << "Can't modify register 0 " << endl;
-								return 0;
-							}
-							lw(source, destination, offset);
+						//}
+						//else if (instructions == "LW")
+						//{
+						//	string source, destination, offset;
+						//	getline(s, destination, ',');
+						//	getline(s, offset, '(');
+						//	getline(s, source, ')');
+						//	if (destination == "x0")
+						//	{
+						//		cout << "Invalid Input !" << endl;
+						//		cout << line << endl;
+						//		cout << "Can't modify register 0 " << endl;
+						//		return 0;
+						//	}
+						//	lw(source, destination, offset);
 
-						}
-						else if (instructions == "LUI")
-						{
-							string rd, imm;
-							getline(s, rd, ',');
-							getline(s, imm);
-							if (rd == "x0")
-							{
-								cout << "Invalid Input !" << endl;
-								cout << line << endl;
-								cout << "Can't modify register 0 " << endl;
-								return 0;
-							}
-							LUI(rd, imm);
+						//}
+						//else if (instructions == "LUI")
+						//{
+						//	string rd, imm;
+						//	getline(s, rd, ',');
+						//	getline(s, imm);
+						//	if (rd == "x0")
+						//	{
+						//		cout << "Invalid Input !" << endl;
+						//		cout << line << endl;
+						//		cout << "Can't modify register 0 " << endl;
+						//		return 0;
+						//	}
+						//	LUI(rd, imm);
 
-						}
-						else if (instructions == "AUIPC")
-						{
-							string rd, imm;
-							getline(s, rd, ',');
-							getline(s, imm);
-							if (rd == "x0")
-							{
-								cout << "Invalid Input !" << endl;
-								cout << line << endl;
-								cout << "Can't modify register 0 " << endl;
-								return 0;
-							}
-							int value;
-							value = stoi(imm) + address;
-							AUIPC(rd, to_string(value));
+						//}
+						//else if (instructions == "AUIPC")
+						//{
+						//	string rd, imm;
+						//	getline(s, rd, ',');
+						//	getline(s, imm);
+						//	if (rd == "x0")
+						//	{
+						//		cout << "Invalid Input !" << endl;
+						//		cout << line << endl;
+						//		cout << "Can't modify register 0 " << endl;
+						//		return 0;
+						//	}
+						//	int value;
+						//	value = stoi(imm) + address;
+						//	AUIPC(rd, to_string(value));
 
-						}
+						//}
 						else if (instructions == "FENCE" || instructions == "ECALL" || instructions == "EBREAK")
 						{
 							cout << "Halting Instruction Detected. Ending Simulation" << endl;
