@@ -1,0 +1,5 @@
+ADDI x1,x0,12
+ADDI x2,x0,13
+BNE x1,x2,-8
+ADD x3,x1,x2
+FENCE

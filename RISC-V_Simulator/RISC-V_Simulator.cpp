@@ -203,6 +203,7 @@ void XOR(string rd, string rs1, string rs2)
 void ADDI(string rd, string rs1, string imm)
 {
 	unordered_map<string, string>::iterator it;
+	it = registers.find(rs1);
 	int32_t t1 = stoi(it->second);
 	int32_t t2 = stoi(imm);
 	t1 = t2 + t1;
@@ -433,7 +434,7 @@ void LW(string rs1, string rd, string off) {
 	it = registers.find(rd);
 	int32_t t2 = stoi(it->second); // t2 = dest value (reg)
 	int32_t t3 = bit_12OverflowSim(stoi(off)); //t3 = 12bit offset 
-	t1 = t1 + t3; //dest = dest_reg + offset
+	t1 = t1 + t3; //src = src_reg + offset
 	it2 = memory.find(to_string(t1));
 	if (it2 == memory.end())
 	{
@@ -645,13 +646,22 @@ int main()
 	int Strt_Address;
 	cout << "Enter the starting address in decimal: " << endl;
 	cin >> Strt_Address;
+	cin.ignore();
+	//Strt_Address = 1000;
 	int FLchoice;
 	int IMchoice;
+	int DMchoice;
+	ifstream code, data_file;
 	bool loop1 = 1;
 	bool loop2 = 1;
 	bool loop3 = 1;
-	cin.ignore();
-	string instructions;
+	bool loop4 = 1;
+	bool Broke = 0;
+	bool jmpsign = 0;
+	bool JALR = 0;
+	
+	string input_file_name,data_file_name;
+	string instructions, data;
 	map<int, string>::iterator it;
 	map<string, string>::iterator it2;
 	while (loop1)
@@ -662,7 +672,7 @@ int main()
 		cout << "4. Terminate Program" << endl;
 		cout << "5. Run Assembly Simulator" << endl;
 		cin >> FLchoice;
-		//cin.ignore();
+		cin.ignore();
 			switch (FLchoice)
 			{
 				case 1:
@@ -679,7 +689,7 @@ int main()
 								while (loop2)
 								{
 									loop3 = 1;
-									cout << "1. Insert Instructions" << endl;
+									cout << "1. Insert Instructions (MUST END WITH A BREAK INSTRUCTION)" << endl;
 									cout << "2. Delete the last instruction" << endl;
 									cout << "3. Go Back" << endl;
 									cin >> IMchoice;
@@ -724,16 +734,108 @@ int main()
 								break;
 							case 2:
 								//Insert from file.
+								cout << "Enter Assembly Program File name" << endl;
+								cin >> input_file_name;
+								cin.ignore();
+								//input_file_name = "Instructions.txt";
+								code.open(input_file_name);
+								while (getline(code, instructions))
+								{
+									memory_inst.emplace(to_string(Strt_Address), instructions);
+									PC_Mem_Ptr.emplace(PC, to_string(Strt_Address));
+									
+									PC++;
+									Strt_Address -= 4;
+									if (instructions == "FENCE" || instructions == "ECALL" || instructions == "EBREAK")
+									{
+										loop3 = 0;
+									}
+								}
+								Inst_Print();
+								code.close();
+								break;
 							case 3:
 								break;
 
 						}
 					break;
 				case 2:
-
+					loop4 = 1;
+					int DEchoice;
 					cout << "1. Insert Data Manually" << endl;
 					cout << "2. Insert Data From File" << endl;
 					cout << "3. Go Back" << endl;
+					cin >> DEchoice;
+					cin.ignore();
+					switch (DEchoice)
+					{
+					case 1:
+						while (loop4)
+						{
+							for (it2 = memory.begin(); it2 != memory.end(); it2++)
+							{
+								cout << "Address: " << it2->first << " Value: " << it2->second << endl;
+							}
+							cout << "1. Insert Data into memory" << endl;
+							cout << "2. Delete Data from memory" << endl;
+							cout << "3. Go Back" << endl;
+							cin >> DMchoice;
+							cin.ignore();
+							string mem, data;
+							switch (DMchoice)
+							{
+							case 1:
+									cout << "Memory Address: ";
+									cin >> mem;
+									cin.ignore();
+									cout << "Memory Data: ";
+									cin >> data;
+									cin.ignore();
+									memory.emplace(mem, data);
+								break;
+							case 2:
+								cout << "Memory Address: ";
+								cin >> mem;
+								cin.ignore();
+								if (memory.find(mem) != memory.end())
+								{
+									memory.erase(memory.find(mem));
+								}
+								else
+								{
+									cout << "There is no data at that address" << endl;
+								}
+								break;
+							case 3:
+								loop4 = 0;
+								break;
+							}
+
+						}
+						break;
+					case 2:
+						//Insert from file.
+						cout << "Enter Data File name" << endl;
+						cin >> data_file_name;
+						cin.ignore();
+						//input_file_name = "Instructions.txt";
+						data_file.open(data_file_name);
+						while (!data_file.eof())
+						{
+							string address, value;
+							getline(data_file, data);
+							stringstream s(data);
+							getline(s, address, ',');
+							getline(s, value, ',');
+							memory.emplace(address,value);
+						}
+						Inst_Print();
+						data_file.close();
+						break;
+					case 3:
+						break;
+
+					}
 					break;
 				case 3:
 					cin >> Strt_Address;
@@ -744,8 +846,9 @@ int main()
 					break;
 				case 5:
 					cout << "Running RISC-V Assembly Simulator" << endl;
-					
+					instructions.clear();
 					it= PC_Mem_Ptr.begin();
+					PC = 0;
 					while (it != PC_Mem_Ptr.end())
 					{
 						//PC_PTR int, memory address
@@ -753,9 +856,13 @@ int main()
 						cout << endl;
 						cout << "Instruction Count : " << it->first << endl;
 						cout << "Address Number : " << it->second << endl;
-						string line = it->second;
+						it2 = memory_inst.find(it->second);
+						string line = it2->second;
+						//cout << "Ping 1" << endl;
 						stringstream s(line);
+						cout << "Current Instruction : " << line << endl;
 						getline(s, instructions, ' ');
+						//cout << "Ping 3" << endl;
 						if (instructions == "ADD")
 						{
 							string rd, rs1, rs2;
@@ -769,9 +876,11 @@ int main()
 								return 0;
 							}
 							ADD(rd, rs1, rs2);
+							PC++;
 						}
 						else if (instructions == "ADDI")
 						{
+							//cout << "Ping 4" << endl;
 							string rd, rs1, imm;
 							getline(s, rd, ',');
 							getline(s, rs1, ',');
@@ -782,8 +891,9 @@ int main()
 								cout << "Can't modify register x0 " << endl;
 								return 0;
 							}
+							//cout << "Ping 5" << endl;
 							ADDI(rd, rs1, imm);
-
+							PC++;
 						}
 						else if (instructions == "SUB")
 						{
@@ -799,6 +909,7 @@ int main()
 								return 0;
 							}
 							SUB(rd, rs1, rs2);
+							PC++;
 						}
 						else if (instructions == "XOR")
 						{
@@ -814,6 +925,7 @@ int main()
 								return 0;
 							}
 							XOR(rd, rs1, rs2);
+							PC++;
 
 						}
 						else if (instructions == "XORI")
@@ -830,6 +942,7 @@ int main()
 								return 0;
 							}
 							XORI(rd, rs1, imm);
+							PC++;
 
 						}
 						else if (instructions == "OR")
@@ -846,6 +959,7 @@ int main()
 								return 0;
 							}
 							OR(rd, rs1, rs2);
+							PC++;
 						}
 						else if (instructions == "ORI")
 						{
@@ -861,6 +975,7 @@ int main()
 								return 0;
 							}
 							ORI(rd, rs1, imm);
+							PC++;
 
 						}
 						else if (instructions == "AND")
@@ -877,6 +992,7 @@ int main()
 								return 0;
 							}
 							AND(rd, rs1, rs2);
+							PC++;
 
 						}
 						else if (instructions == "ANDI")
@@ -893,6 +1009,7 @@ int main()
 								return 0;
 							}
 							ANDI(rd, rs1, imm);
+							PC++;
 
 						}
 						else if (instructions == "SLT")
@@ -909,6 +1026,7 @@ int main()
 								return 0;
 							}
 							SLT(rd, rs1, rs2);
+							PC++;
 
 						}
 						else if (instructions == "SLTU")
@@ -925,7 +1043,7 @@ int main()
 								return 0;
 							}
 							SLTU(rd, rs1, rs2);
-
+							PC++;
 						}
 						else if (instructions == "SLTI")
 						{
@@ -941,7 +1059,7 @@ int main()
 								return 0;
 							}
 							SLTI(rd, rs1, imm);
-
+							PC++;
 						}
 						else if (instructions == "SLTIU")
 						{
@@ -957,7 +1075,7 @@ int main()
 								return 0;
 							}
 							SLTIU(rd, rs1, imm);
-
+							PC++;
 						}
 						else if (instructions == "SLL")
 						{
@@ -973,6 +1091,7 @@ int main()
 								return 0;
 							}
 							SLL(rd, rs1, rs2);
+							PC++;
 						}
 						else if (instructions == "SRL")
 						{
@@ -988,6 +1107,7 @@ int main()
 								return 0;
 							}
 							SRL(rd, rs1, rs2);
+							PC++;
 						}
 						else if (instructions == "SRA")
 						{
@@ -1003,6 +1123,7 @@ int main()
 								return 0;
 							}
 							SRA(rd, rs1, rs2);
+							PC++;
 						}
 						else if (instructions == "SLLI")
 						{
@@ -1018,6 +1139,7 @@ int main()
 								return 0;
 							}
 							SLLI(rd, rs1, imm);
+							PC++;
 						}
 						else if (instructions == "SRLI")
 						{
@@ -1033,6 +1155,7 @@ int main()
 								return 0;
 							}
 							SRLI(rd, rs1, imm);
+							PC++;
 						}
 						else if (instructions == "SRAI")
 						{
@@ -1048,285 +1171,714 @@ int main()
 								return 0;
 							}
 							SRAI(rd, rs1, imm);
+							PC++;
 						}
-						//else if (instructions == "BNE")
-						//{
-						//	string rs1, rs2, imm;
-						//	getline(s, rs1, ',');
-						//	getline(s, rs2, ',');
-						//	getline(s, imm);
-						//	//PC_PTR int, memory address
-						//	//mem_inst memory address, instruction
-						//	unordered_map<string, string>::iterator it1;
-						//	it1 = registers.find(rs1);
-						//	int t1 = stoi(it1->second);
-						//	it1 = registers.find(rs2);
-						//	int t3 = bit_12OverflowSim(stoi(imm));
-						//	int t2 = stoi(it1->second);
-						//	if (t1 != t2)
-						//		//address = it->first + t3;
-						//	//Inst_Print();
-						//	// Logic: t3 % 4 and check if = 0 --> correct then PC+ (t3)/4 Offeset from current instruction
-						//		//PRINT THE NEXT INSTRUCTION
-						//}
-						//else if (instructions == "BEQ")
-						//{
-						//	string rs1, rs2, imm;
-						//	getline(s, rs1, ',');
-						//	getline(s, rs2, ',');
-						//	getline(s, imm);
-						//	auto it1 = registers.find(rs1);
-						//	int temp1 = stoi(it1->second[0]);
-						//	it1 = registers.find(rs2);
-						//	int temp2 = stoi(it1->second[0]);
-						//	if (temp1 == temp2)
-						//		address = it->first + stoi(imm);
-						//	printMap();
-						//}
-						//else if (instructions == "BLT")
-						//{
-						//	string rs1, rs2, imm;
-						//	getline(s, rs1, ',');
-						//	getline(s, rs2, ',');
-						//	getline(s, imm);
-						//	auto it1 = registers.find(rs1);
-						//	int temp1 = stoi(it1->second[0]);
-						//	it1 = registers.find(rs2);
-						//	int temp2 = stoi(it1->second[0]);
-						//	if (temp1 < temp2)
-						//		address = it->first + stoi(imm);
+						else if (instructions == "BNE")
+						{
+							string rs1, rs2, imm;
+							getline(s, rs1, ',');
+							getline(s, rs2, ',');
+							getline(s, imm);
+							//PC_PTR int, memory address
+							//mem_inst memory address, instruction
+							unordered_map<string, string>::iterator it1;
+							map<int, string>::iterator it2;
+							it1 = registers.find(rs1);
+							int32_t t1 = stoi(it1->second);
+							it1 = registers.find(rs2);
+							int32_t t3 = bit_12OverflowSim(stoi(imm));
+							int32_t t2 = stoi(it1->second);
+							if (t1 != t2)
+							{
+								if (t3 % 4 == 0)
+								{
+									//cout << t3 / 4 << endl;
+									//if positive - if negative +
+									if ((t3 / 4) > 0)
+									{
+										//cout << "+" << endl;
+										it2 = PC_Mem_Ptr.find(PC + (t3 / 4));
+										jmpsign = 1;
+									}
+									else
+									{
+										//cout << "-" << endl;
+										it2 = PC_Mem_Ptr.find(PC - (t3 / 4));
+										jmpsign = 0;
+									}
+									//cout << PC << endl;
+									if (it2 != PC_Mem_Ptr.end())
+									{
+										//PC = PC + (t3 / 4);
+										if (jmpsign)
+										{
+											PC = PC + (t3 / 4);
+										}
+										else
+										{
+											PC = PC - (t3 / 4);
+										}
+										cout << "Branched to instruction: " << PC << " at address: " << it2->second << endl;
 
-						//	printMap();
+									}
+									else
+									{
+										cout << "No instruction at PC = ";
+										if (jmpsign)
+										{
+											cout << PC + (t3 / 4) << endl;
+										}
+										else
+										{
+											cout << PC - (t3 / 4) << endl;
+										}
+										PC++;
+									}
+								}
+								else
+								{
+									it2 = PC_Mem_Ptr.find(PC);
+									cout << "Invalid Branching offset from instruction: "<<PC<<" at address: "<< it2->second<<" Offset would branch to the middle of instruction: "<<floor(PC+(t3/4))<<" at address: ";
+									it2 = PC_Mem_Ptr.find(floor(PC + (t3 / 4)));
+									cout << it2->second << endl;
+									PC++;
+								}
+							}
+							else
+							{
+								PC++;
+							}
+								//address = it->first + t3;
+							//Inst_Print();
+							// Logic: t3 % 4 and check if = 0 --> correct then PC+ (t3)/4 Offeset from current instruction
+								//PRINT THE NEXT INSTRUCTION
+						}
+						else if (instructions == "BEQ")
+						{
+							string rs1, rs2, imm;
+							getline(s, rs1, ',');
+							getline(s, rs2, ',');
+							getline(s, imm);
+							unordered_map<string, string>::iterator it1;
+							map<int, string>::iterator it2;
+							it1 = registers.find(rs1);
+							int32_t t1 = stoi(it1->second);
+							it1 = registers.find(rs2);
+							int32_t t2 = stoi(it1->second);
+							int32_t t3 = bit_12OverflowSim(stoi(imm));
+							if (t1 == t2)
+							{ 
+								if (t3 % 4 == 0)
+								{
+									//cout << t3 / 4 << endl;
+									//if positive - if negative +
+									if ((t3 / 4) > 0)
+									{
+										//cout << "+" << endl;
+										it2 = PC_Mem_Ptr.find(PC + (t3 / 4));
+										jmpsign = 1;
+									}
+									else
+									{
+										//cout << "-" << endl;
+										it2 = PC_Mem_Ptr.find(PC - (t3 / 4));
+										jmpsign = 0;
+									}
+									//cout << PC << endl;
+									if (it2 != PC_Mem_Ptr.end())
+									{
+										//PC = PC + (t3 / 4);
+										if (jmpsign)
+										{
+											PC = PC + (t3 / 4);
+										}
+										else
+										{
+											PC = PC - (t3 / 4);
+										}
+										cout << "Branched to instruction: " << PC << " at address: " << it2->second << endl;
+										
+									}
+									else
+									{
+										cout << "No instruction at PC = ";
+										if (jmpsign)
+										{
+											cout << PC + (t3 / 4) << endl;
+										}
+										else
+										{
+											cout << PC - (t3 / 4) << endl;
+										}
+										PC++;
+									}
+								}
+								else
+								{
+									it2 = PC_Mem_Ptr.find(PC);
+									cout << "Invalid Branching offset from instruction: " << PC << " at address: " << it2->second << " Offset would branch to the middle of instruction: " << floor(PC + (t3 / 4)) << " at address: ";
+									it2 = PC_Mem_Ptr.find(floor(PC + (t3 / 4)));
+									cout << it2->second << endl;
+									PC++;
+								}
+							}
+							else
+							{
+								PC++;
+							}
+							
+						}
+						else if (instructions == "BLT")
+						{
+							string rs1, rs2, imm;
+							getline(s, rs1, ',');
+							getline(s, rs2, ',');
+							getline(s, imm);
+							unordered_map<string, string>::iterator it1;
+							map<int, string>::iterator it2;
+							it1 = registers.find(rs1);
+							int32_t t1 = stoi(it1->second);
+							it1 = registers.find(rs2);
+							int32_t t2 = stoi(it1->second);
+							int32_t t3 = bit_12OverflowSim(stoi(imm));
+							if (t1 < t2)
+							{
+								if (t3 % 4 == 0)
+								{
+									//cout << t3 / 4 << endl;
+									//if positive - if negative +
+									if ((t3 / 4) > 0)
+									{
+										//cout << "+" << endl;
+										it2 = PC_Mem_Ptr.find(PC + (t3 / 4));
+										jmpsign = 1;
+									}
+									else
+									{
+										//cout << "-" << endl;
+										it2 = PC_Mem_Ptr.find(PC - (t3 / 4));
+										jmpsign = 0;
+									}
+									//cout << PC << endl;
+									if (it2 != PC_Mem_Ptr.end())
+									{
+										//PC = PC + (t3 / 4);
+										if (jmpsign)
+										{
+											PC = PC + (t3 / 4);
+										}
+										else
+										{
+											PC = PC - (t3 / 4);
+										}
+										cout << "Branched to instruction: " << PC << " at address: " << it2->second << endl;
 
-						//}
-						//else if (instructions == "BLTU")
-						//{
-						//	string rs1, rs2, imm;
-						//	getline(s, rs1, ',');
-						//	getline(s, rs2, ',');
-						//	getline(s, imm);
-						//	auto it1 = registers.find(rs1);
-						//	unsigned int temp1 = stoi(it1->second[0]);
-						//	it1 = registers.find(rs2);
-						//	unsigned int temp2 = stoi(it1->second[0]);
-						//	if (temp1 < temp2)
-						//		address = it->first + stoi(imm);
-						//	printMap();
+									}
+									else
+									{
+										cout << "No instruction at PC = ";
+										if (jmpsign)
+										{
+											cout << PC + (t3 / 4) << endl;
+										}
+										else
+										{
+											cout << PC - (t3 / 4) << endl;
+										}
+										PC++;
+									}
 
-						//}
-						//else if (instructions == "BGE")
-						//{
-						//	string rs1, rs2, imm;
-						//	getline(s, rs1, ',');
-						//	getline(s, rs2, ',');
-						//	getline(s, imm);
-						//	auto it1 = registers.find(rs1);
-						//	int temp1 = stoi(it1->second[0]);
-						//	it1 = registers.find(rs2);
-						//	int temp2 = stoi(it1->second[0]);
-						//	if (temp1 > temp2)
-						//		address = it->first + stoi(imm);
-						//	printMap();
+								}
+								else
+								{
+									it2 = PC_Mem_Ptr.find(PC);
+									cout << "Invalid Branching offset from instruction: " << PC << " at address: " << it2->second << " Offset would branch to the middle of instruction: " << floor(PC + (t3 / 4)) << " at address: ";
+									it2 = PC_Mem_Ptr.find(floor(PC + (t3 / 4)));
+									cout << it2->second << endl;
+									PC++;
+								}
+							}
+							else
+							{
+								PC++;
+							}
 
-						//}
-						//else if (instructions == "BGEU")
-						//{
-						//	string rs1, rs2, imm;
-						//	getline(s, rs1, ',');
-						//	getline(s, rs2, ',');
-						//	getline(s, imm);
-						//	auto it1 = registers.find(rs1);
-						//	unsigned int temp1 = stoi(it1->second[0]);
-						//	it1 = registers.find(rs2);
-						//	unsigned int temp2 = stoi(it1->second[0]);
-						//	if (temp1 > temp2)
-						//		address = it->first + stoi(imm);
-						//	printMap();
+						}
+						else if (instructions == "BLTU")
+						{
+							string rs1, rs2, imm;
+							getline(s, rs1, ',');
+							getline(s, rs2, ',');
+							getline(s, imm);
+							unordered_map<string, string>::iterator it1;
+							map<int, string>::iterator it2;
+							it1 = registers.find(rs1);
+							uint32_t t1 = stoi(it1->second);
+							it1 = registers.find(rs2);
+							uint32_t t2 = stoi(it1->second);
+							int32_t t3 = bit_12OverflowSim(stoi(imm));
+							if (t1 < t2)
+							{
+								if (t3 % 4 == 0)
+								{
+									//cout << t3 / 4 << endl;
+									//if positive - if negative +
+									if ((t3 / 4) > 0)
+									{
+										//cout << "+" << endl;
+										it2 = PC_Mem_Ptr.find(PC + (t3 / 4));
+										jmpsign = 1;
+									}
+									else
+									{
+										//cout << "-" << endl;
+										it2 = PC_Mem_Ptr.find(PC - (t3 / 4));
+										jmpsign = 0;
+									}
+									//cout << PC << endl;
+									if (it2 != PC_Mem_Ptr.end())
+									{
+										//PC = PC + (t3 / 4);
+										if (jmpsign)
+										{
+											PC = PC + (t3 / 4);
+										}
+										else
+										{
+											PC = PC - (t3 / 4);
+										}
+										cout << "Branched to instruction: " << PC << " at address: " << it2->second << endl;
 
-						//}
-						//else if (instructions == "JAL")
-						//{
-						//	string ra, imm;
-						//	getline(s, ra, ',');
-						//	getline(s, imm);
+									}
+									else
+									{
+										cout << "No instruction at PC = ";
+										if (jmpsign)
+										{
+											cout << PC + (t3 / 4) << endl;
+										}
+										else
+										{
+											cout << PC - (t3 / 4) << endl;
+										}
+										PC++;
+									}
+								}
+								else
+								{
+									it2 = PC_Mem_Ptr.find(PC);
+									cout << "Invalid Branching offset from instruction: " << PC << " at address: " << it2->second << " Offset would branch to the middle of instruction: " << floor(PC + (t3 / 4)) << " at address: ";
+									it2 = PC_Mem_Ptr.find(floor(PC + (t3 / 4)));
+									cout << it2->second << endl;
+									PC++;
+								}
+							}
+							else
+							{
+								PC++;
+							}
+						}
+						else if (instructions == "BGE")
+						{
+							string rs1, rs2, imm;
+							getline(s, rs1, ',');
+							getline(s, rs2, ',');
+							getline(s, imm);
+							unordered_map<string, string>::iterator it1;
+							map<int, string>::iterator it2;
+							it1 = registers.find(rs1);
+							int32_t t1 = stoi(it1->second);
+							it1 = registers.find(rs2);
+							int32_t t2 = stoi(it1->second);
+							int32_t t3 = bit_12OverflowSim(stoi(imm));
+							if (t1 > t2)
+							{
+								//cout << t3 / 4 << endl;
+								//if positive - if negative +
+								if (t3 % 4 == 0)
+								{
+									//cout << t3 / 4 << endl;
+									//if positive - if negative +
+									if ((t3 / 4) > 0)
+									{
+										//cout << "+" << endl;
+										it2 = PC_Mem_Ptr.find(PC + (t3 / 4));
+										jmpsign = 1;
+									}
+									else
+									{
+										//cout << "-" << endl;
+										it2 = PC_Mem_Ptr.find(PC - (t3 / 4));
+										jmpsign = 0;
+									}
+									//cout << PC << endl;
+									if (it2 != PC_Mem_Ptr.end())
+									{
+										//PC = PC + (t3 / 4);
+										if (jmpsign)
+										{
+											PC = PC + (t3 / 4);
+										}
+										else
+										{
+											PC = PC - (t3 / 4);
+										}
+										cout << "Branched to instruction: " << PC << " at address: " << it2->second << endl;
 
-						//	if (ra == "x0")
-						//	{
-						//		cout << "Invalid Input !" << endl;
-						//		cout << line << endl;
-						//		cout << "Can't modify register 0 " << endl;
-						//		return 0;
-						//	}
-						//	auto it1 = registers.find(ra);
-						//	it1->second[0] = to_string(address - 4);
-						//	address = it->first + stoi(imm);
+									}
+									else
+									{
+										cout << "No instruction at PC = ";
+										if (jmpsign)
+										{
+											cout << PC + (t3 / 4) << endl;
+										}
+										else
+										{
+											cout << PC - (t3 / 4) << endl;
+										}
+										PC++;
+									}
+								}
+								else
+								{
+									it2 = PC_Mem_Ptr.find(PC);
+									cout << "Invalid Branching offset from instruction: " << PC << " at address: " << it2->second << " Offset would branch to the middle of instruction: " << floor(PC + (t3 / 4)) << " at address: ";
+									it2 = PC_Mem_Ptr.find(floor(PC + (t3 / 4)));
+									cout << it2->second << endl;
+									PC++;
+								}
+							}
+							else
+							{
+								PC++;
+							}
+						}
+						else if (instructions == "BGEU")
+						{
+							string rs1, rs2, imm;
+							getline(s, rs1, ',');
+							getline(s, rs2, ',');
+							getline(s, imm);
+							unordered_map<string, string>::iterator it1;
+							map<int, string>::iterator it2;
+							it1 = registers.find(rs1);
+							uint32_t t1 = stoi(it1->second);
+							it1 = registers.find(rs2);
+							uint32_t t2 = stoi(it1->second);
+							int32_t t3 = bit_12OverflowSim(stoi(imm));
+							if (t1 > t2)
+							{
+								//if positive - if negative +
+								if (t3 % 4 == 0)
+								{
+									//cout << t3 / 4 << endl;
+									//if positive - if negative +
+									if ((t3 / 4) > 0)
+									{
+										//cout << "+" << endl;
+										it2 = PC_Mem_Ptr.find(PC + (t3 / 4));
+										jmpsign = 1;
+									}
+									else
+									{
+										//cout << "-" << endl;
+										it2 = PC_Mem_Ptr.find(PC - (t3 / 4));
+										jmpsign = 0;
+									}
+									//cout << PC << endl;
+									if (it2 != PC_Mem_Ptr.end())
+									{
+										//PC = PC + (t3 / 4);
+										if (jmpsign)
+										{
+											PC = PC + (t3 / 4);
+										}
+										else
+										{
+											PC = PC - (t3 / 4);
+										}
+										cout << "Branched to instruction: " << PC << " at address: " << it2->second << endl;
 
-						//	printMap();
+									}
+									else
+									{
+										cout << "No instruction at PC = ";
+										if (jmpsign)
+										{
+											cout << PC + (t3 / 4) << endl;
+										}
+										else
+										{
+											cout << PC - (t3 / 4) << endl;
+										}
+										PC++;
+									}
+								}
+								else
+								{
+									it2 = PC_Mem_Ptr.find(PC);
+									cout << "Invalid Branching offset from instruction: " << PC << " at address: " << it2->second << " Offset would branch to the middle of instruction: " << floor(PC + (t3 / 4)) << " at address: ";
+									it2 = PC_Mem_Ptr.find(floor(PC + (t3 / 4)));
+									cout << it2->second << endl;
+									PC++;
+								}
+							}
+							else
+							{
+								PC++;
+							}
+						}
+						else if (instructions == "SW")
+						{
+							string rs1, rs2, off;
+							getline(s, rs1, ',');
+							getline(s, off, '(');
+							getline(s, rs2, ')');
+							SW(rs1, rs2, off);
+							PC++;
+						}
+						else if (instructions == "SH")
+						{
+							string rs1, rs2, off;
+							getline(s, rs1, ',');
+							getline(s, off, '(');
+							getline(s, rs2, ')');
+							SH(rs1, rs2, off);
+							PC++;
+						}
+						else if (instructions == "SB")
+						{
+							string rs1, rs2, off;
+							getline(s, rs1, ',');
+							getline(s, off, '(');
+							getline(s, rs2, ')');
+							SB(rs1, rs2, off);
+							PC++;
+						}
+						else if (instructions == "LH")
+						{
+							string rs1, rd, off;
+							getline(s, rd, ',');
+							getline(s, off, '(');
+							getline(s, rs1, ')');
+							if (rd == "x0")
+							{
+								cout << "Invalid Input: ";
+								cout << line << endl;
+								cout << "Can't modify register x0 " << endl;
+							}
+							LH(rs1, rd, off);
+							PC++;
+						}
+						else if (instructions == "LB")
+						{
+							string rs1, rd, off;
+							getline(s, rd, ',');
+							getline(s, off, '(');
+							getline(s, rs1, ')');
+							if (rd == "x0")
+							{
+								cout << "Invalid Input: ";
+								cout << line << endl;
+								cout << "Can't modify register x0 " << endl;
+							}
+							LB(rs1, rd, off);
+							PC++;
+						}
+						else if (instructions == "LBU")
+						{
+							string rs1, rd, off;
+							getline(s, rd, ',');
+							getline(s, off, '(');
+							getline(s, rs1, ')');
+							if (rd == "x0")
+							{
+								cout << "Invalid Input: ";
+								cout << line << endl;
+								cout << "Can't modify register x0 " << endl;
+							}
+							LBU(rs1, rd, off);
+							PC++;
+						}
+						else if (instructions == "LHU")
+						{
+							string rs1, rd, off;
+							getline(s, rd, ',');
+							getline(s, off, '(');
+							getline(s, rs1, ')');
+							if (rd == "x0")
+							{
+								cout << "Invalid Input: ";
+								cout << line << endl;
+								cout << "Can't modify register x0 " << endl;
+							}
+							LHU(rs1, rd, off);
+							PC++;
+						}
+						else if (instructions == "LW")
+						{
+							string rs1, rd, off;
+							getline(s, rd, ',');
+							getline(s, off, '(');
+							getline(s, rs1, ')');
+							if (rd == "x0")
+							{
+								cout << "Invalid Input: ";
+								cout << line << endl;
+								cout << "Can't modify register x0 " << endl;
+							}
+							LW(rs1, rd, off);
+							PC++;
+						}
+						else if (instructions == "LUI")
+						{
+							string rd, imm;
+							getline(s, rd, ',');
+							getline(s, imm);
+							if (rd == "x0")
+							{
+								cout << "Invalid Input: ";
+								cout << line << endl;
+								cout << "Can't modify register x0 " << endl;
+							}
+							LUI(rd, imm);
+							PC++;
+						}
+						else if (instructions == "AUIPC")
+						{
+							string rd, imm;
+							getline(s, rd, ',');
+							getline(s, imm);
+							if (rd == "x0")
+							{
+								cout << "Invalid Input: ";
+								cout << line << endl;
+								cout << "Can't modify register x0 " << endl;
+							}
+							AUIPC(rd, imm);
+							PC++;
+						}
+						else if (instructions == "JAL")
+						{
+							string ra, imm;
+							getline(s, ra, ',');
+							getline(s, imm);
+							unordered_map<string, string>::iterator it1;
+							map<int, string>::iterator it2;
+							int32_t t3 = stoi(imm);
+							if (ra == "x0")
+							{
+								cout << "Invalid Input: ";
+								cout << line << endl;
+								cout << "Can't modify register x0 " << endl;
+							}
+							it1 = registers.find(ra);
+							//store next adddress in ra
+							it2 = PC_Mem_Ptr.find(PC + 1);
+							if (it2 != PC_Mem_Ptr.end())
+							{
+								it1->second = it2->second;
+								if (t3 % 4 == 0)
+								{
+									//cout << t3 / 4 << endl;
+									//if positive - if negative +
+									if ((t3 / 4) > 0)
+									{
+										//cout << "+" << endl;
+										it2 = PC_Mem_Ptr.find(PC + (t3 / 4));
+										PC = PC + (t3 / 4);
+									}
+									else
+									{
+										//cout << "-" << endl;
+										it2 = PC_Mem_Ptr.find(PC - (t3 / 4));
+										PC = PC - (t3 / 4);
+									}
+									//cout << PC << endl;
+									if (it2 != PC_Mem_Ptr.end())
+									{
+										//PC = PC + (t3 / 4);
+										cout << "Jumped to instruction: " << PC << " at address: " << it2->second << endl;
+									}
+									else
+									{
+										cout << "No instruction at PC = ";
+										if (jmpsign)
+										{
+											cout << PC + (t3 / 4) << endl;
+										}
+										else
+										{
+											cout << PC - (t3 / 4) << endl;
+										}
+										PC++;
+									}
+								}
+							}
+							else
+							{
+								cout << "There is no instruction after this JAL." << endl;
+							}
 
-						//}
-						//else if (instructions == "JALR")
-						//{
-						//	string zero, ra, offset;
-						//	getline(s, zero, ',');
-						//	getline(s, offset, '(');
-						//	getline(s, ra, ')');
+						}
+						else if (instructions == "JALR")
+						{
+							string x0, ra, imm;
+							getline(s, x0, ',');
+							getline(s, imm, '(');
+							getline(s, ra, ')');
+							unordered_map<string, string>::iterator it1;
+							map<int, string>::iterator it2;
+							it1 = registers.find(ra);
+							int32_t t3 = bit_12OverflowSim(stoi(imm));
+							int32_t t2 = stoi(it1->second) + t3;
+							//bitset<32>B = t2;
+							//B[0] = 0;
+							t2 = t2 >> 1;
+							t2 = t2 << 1;
+							for (it2 = PC_Mem_Ptr.begin(); it2 != PC_Mem_Ptr.end(); it2++)
+							{
+								if (stoi(it2->second) == t2)
+								{
+									PC = it2->first;
+									JALR = 1;
+									break;
+								}
+							}
+							if (JALR == 1)
+							{
+								cout << "Jumped to instruction: " << PC << " At address: " << t2 << endl;
+							}
+							else
+							{
+								cout << "Could not find the instruction at address: " << t2 <<" Which originates from the sum of rs1 and the offset with the least significant bit turned to 0" << endl;
+								PC++;
+							}
 
-						//	auto it1 = registers.find(ra);
-						//	address = stoi(it1->second[0]) + stoi(offset) + 4;
-
-
-						//}
-						//else if (instructions == "SW")
-						//{
-						//	string source, destination, offset;
-						//	getline(s, source, ',');
-						//	getline(s, offset, '(');
-						//	getline(s, destination, ')');
-						//	Sw(source, destination, offset);
-
-						//}
-						//else if (instructions == "SH")
-						//{
-						//	string source, destination, offset;
-						//	getline(s, destination, ',');
-						//	getline(s, offset, '(');
-						//	getline(s, source, ')');
-						//	SH(source, destination, offset);
-
-						//}
-						//else if (instructions == "SB")
-						//{
-						//	string source, destination, offset;
-						//	getline(s, destination, ',');
-						//	getline(s, offset, '(');
-						//	getline(s, source, ')');
-						//	SB(source, destination, offset);
-
-						//}
-						//else if (instructions == "LH")
-						//{
-						//	string source, destination, offset;
-						//	getline(s, destination, ',');
-						//	getline(s, offset, '(');
-						//	getline(s, source, ')');
-						//	if (destination == "x0")
-						//	{
-						//		cout << "Invalid Input !" << endl;
-						//		cout << line << endl;
-						//		cout << "Can't modify register 0 " << endl;
-						//		return 0;
-						//	}
-						//	LH(source, destination, offset);
-
-						//}
-						//else if (instructions == "LB")
-						//{
-						//	string source, destination, offset;
-						//	getline(s, destination, ',');
-						//	getline(s, offset, '(');
-						//	getline(s, source, ')');
-						//	if (destination == "x0")
-						//	{
-						//		cout << "Invalid Input !" << endl;
-						//		cout << line << endl;
-						//		cout << "Can't modify register 0 " << endl;
-						//		return 0;
-						//	}
-						//	LB(source, destination, offset);
-
-						//}
-						//else if (instructions == "LBU")
-						//{
-						//	string source, destination, offset;
-						//	getline(s, destination, ',');
-						//	getline(s, offset, '(');
-						//	getline(s, source, ')');
-						//	if (destination == "x0")
-						//	{
-						//		cout << "Invalid Input !" << endl;
-						//		cout << line << endl;
-						//		cout << "Can't modify register 0 " << endl;
-						//		return 0;
-						//	}
-						//	LBU(source, destination, offset);
-
-						//}
-						//else if (instructions == "LHU")
-						//{
-						//	string source, destination, offset;
-						//	getline(s, destination, ',');
-						//	getline(s, offset, '(');
-						//	getline(s, source, ')');
-						//	if (destination == "x0")
-						//	{
-						//		cout << "Invalid Input !" << endl;
-						//		cout << line << endl;
-						//		cout << "Can't modify register 0 " << endl;
-						//		return 0;
-						//	}
-						//	LHU(source, destination, offset);
-
-						//}
-						//else if (instructions == "LW")
-						//{
-						//	string source, destination, offset;
-						//	getline(s, destination, ',');
-						//	getline(s, offset, '(');
-						//	getline(s, source, ')');
-						//	if (destination == "x0")
-						//	{
-						//		cout << "Invalid Input !" << endl;
-						//		cout << line << endl;
-						//		cout << "Can't modify register 0 " << endl;
-						//		return 0;
-						//	}
-						//	lw(source, destination, offset);
-
-						//}
-						//else if (instructions == "LUI")
-						//{
-						//	string rd, imm;
-						//	getline(s, rd, ',');
-						//	getline(s, imm);
-						//	if (rd == "x0")
-						//	{
-						//		cout << "Invalid Input !" << endl;
-						//		cout << line << endl;
-						//		cout << "Can't modify register 0 " << endl;
-						//		return 0;
-						//	}
-						//	LUI(rd, imm);
-
-						//}
-						//else if (instructions == "AUIPC")
-						//{
-						//	string rd, imm;
-						//	getline(s, rd, ',');
-						//	getline(s, imm);
-						//	if (rd == "x0")
-						//	{
-						//		cout << "Invalid Input !" << endl;
-						//		cout << line << endl;
-						//		cout << "Can't modify register 0 " << endl;
-						//		return 0;
-						//	}
-						//	int value;
-						//	value = stoi(imm) + address;
-						//	AUIPC(rd, to_string(value));
-
-						//}
+						}
 						else if (instructions == "FENCE" || instructions == "ECALL" || instructions == "EBREAK")
 						{
 							cout << "Halting Instruction Detected. Ending Simulation" << endl;
-						}
+							PrintMem_Reg();
 
+							Broke = 1;
+						}
 						else
 						{
 							cout << "Invalid Input : " << line << endl;
 						}
 
-						PC++;
-						it = PC_Mem_Ptr.find(PC);
+						//PC++; ONLY INC ON NOT BRANCHING OR JUMPING
+						if (Broke == 1)
+						{
+							it = PC_Mem_Ptr.end();
+						}
+						else 
+						{
+							it = PC_Mem_Ptr.find(PC);
+						}
+						
 					}
 					loop1 = 0;
 					break;
@@ -1334,48 +1886,6 @@ int main()
 					cout << "Please enter a valid value." << endl;
 			}
 	}
-	
-	
-	
-	//cout << Stringtobinary("-21") << endl;
-	//cout << Stringtohexa("-21") << endl;
-	/*{
-	string input_file_name, program_file_name;
-	int address;
-	ifstream code, address_file;
-	string instruction, line;
-	//inisalize  map
-	//get user input
-	cout << "Enter Assembly Program File name" << endl;
-	cin >> input_file_name;
-	cout << "Enter the starting address: " << endl;
-	cin >> address;
-	cout << "Enter Program Data File name" << endl;
-	cin >> program_file_name;
-	//read and store instructions
-	code.open(input_file_name);
-	while (getline(code, line))
-	{
-		insta_addresses.insert({ address ,line });
-		address += 4;
-	}
-	code.close();
-	//read and set memory address
-	address_file.open(program_file_name);
-	while (!address_file.eof()) {
-		string address, value;
-		getline(address_file, line);
-		stringstream s(line);
-		getline(s, address, ',');
-		getline(s, value, ',');
-		memory_address_values.insert({ stoi(address),{value,"0b" + tobinary(value),"0x" + tohexa(value)} });
-	}
-	address_file.close();
-	//generate each instruction
-	
-	return 0;
-	}
-	*/
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
