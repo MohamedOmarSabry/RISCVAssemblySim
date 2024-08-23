@@ -108,19 +108,6 @@ string Stringtohexa(string value) //works
 	}
 	return s;
 }
-int binaryToDecimal(string n) //works
-{
-	string num = n;
-	int dec_value = 0;
-	int base = 1;
-	int len = num.length();
-	for (int i = len - 1; i >= 0; i--) {
-		if (num[i] == '1')
-			dec_value += base;
-		base = base * 2;
-	}
-	return dec_value;
-}
 void PrintMem_Reg()
 {
 	unordered_map<string, string>::iterator it;
