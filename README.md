@@ -14,7 +14,7 @@
 
 ## Getting Started
 
--Run the C++ file included in the GitHub. Instructions can be read from the `instructions.txt` file or inputted manually at run time.
+- Run the C++ file included in the GitHub. Instructions can be read from the `instructions.txt` file or inputted manually at run time.
 
 ## Authors
 
