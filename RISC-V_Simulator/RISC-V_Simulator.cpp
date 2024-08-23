@@ -11,9 +11,6 @@
 #include<fstream>
 #include<sstream>
 using namespace std;
-//Missing features: Loading instructions and Data from file.
-//Test code for bonus.
-//Fix Branching and jumping instructions.
 unordered_map<string, string> registers;
 map<string, string> memory;
 map<int, string>PC_Mem_Ptr;
