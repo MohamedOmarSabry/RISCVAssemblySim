@@ -4,7 +4,7 @@
 
 ## Description
 
-//To be Added
+A command line C++ program made to simulate RISC-V 32-bit instructions. You can load instructions from the `Instructions.txt` file or input them one by one using the terminal. You must use the x-register format and your instructions must end with a breaking instruction. If you decide to do it manually you have the option to delete the last instruction as well. You may also load data from a file or manually insert data. Data is in the form of an address-value pair. The addresses and values are in decimals. You may delete values if you insert their addresses. You may also change the starting instruction memory address. The simulator handles the instruction and data memory as being separate. Once you have loaded your instructions and data, you may run the simulation. The instruction count, address, and the values of your main registers will be displayed after every instruction is simulated.
 
 ## Features
 
